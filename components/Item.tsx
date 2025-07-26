@@ -42,12 +42,15 @@ export class Item {
 
         this.preview = previewEl;
 
-        this.DOM.image = this.DOM.el.querySelector('.item__img');
-        this.DOM.imageInner = this.DOM.el.querySelector('.item__img-inner');
-        this.DOM.link = this.DOM.el.querySelector('.item__link');
-        this.DOM.meta = this.DOM.el.querySelector('.item__meta');
-        this.DOM.title = this.DOM.el.querySelector('.item__title');
-        this.DOM.desc = this.DOM.el.querySelector('.item__desc');
+        // Add null check for this.DOM.el before calling querySelector
+        if (this.DOM.el) {
+            this.DOM.image = this.DOM.el.querySelector('.item__img');
+            this.DOM.imageInner = this.DOM.el.querySelector('.item__img-inner');
+            this.DOM.link = this.DOM.el.querySelector('.item__link');
+            this.DOM.meta = this.DOM.el.querySelector('.item__meta');
+            this.DOM.title = this.DOM.el.querySelector('.item__title');
+            this.DOM.desc = this.DOM.el.querySelector('.item__desc');
+        }
 
         this.initEvents();
     }

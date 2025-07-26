@@ -113,7 +113,9 @@ export class TextLinesReveal {
         // Re-initialize the Split Text on window resize.
         window.addEventListener('resize', () => {
             // Re-split text
-            this.SplitTypeInstance.split();
+            if (this.SplitTypeInstance) {
+                this.SplitTypeInstance.split({ types: 'lines' });
+            }
 
             // Need to wrap again the new lines elements (div with class .oh)
             if (this.SplitTypeInstance.lines) {

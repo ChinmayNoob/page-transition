@@ -43,18 +43,21 @@ export class Preview {
 
         this.multiLines = [];
 
-        this.DOM.image = this.DOM.el.querySelector('.preview__img');
-        this.DOM.imageInner = this.DOM.el.querySelector('.preview__img-inner');
-        this.DOM.title = this.DOM.el.querySelector('.preview__title');
-        this.DOM.backCtrl = this.DOM.el.querySelector('.preview__back');
+        // Add null check for this.DOM.el before calling querySelector
+        if (this.DOM.el) {
+            this.DOM.image = this.DOM.el.querySelector('.preview__img');
+            this.DOM.imageInner = this.DOM.el.querySelector('.preview__img-inner');
+            this.DOM.title = this.DOM.el.querySelector('.preview__title');
+            this.DOM.backCtrl = this.DOM.el.querySelector('.preview__back');
 
-        this.DOM.innerElements = [...this.DOM.el.querySelectorAll('.oh__inner')] as HTMLElement[];
+            this.DOM.innerElements = [...this.DOM.el.querySelectorAll('.oh__inner')] as HTMLElement[];
 
-        // the TextLinesReveal instance (animate each text line using the SplitText library)
-        this.DOM.multiLineWrap = [...this.DOM.el.querySelectorAll('.preview__column > p')] as HTMLElement[];
-        this.DOM.multiLineWrap.forEach(line => {
-            this.multiLines.push(new TextLinesReveal(line));
-        });
+            // the TextLinesReveal instance (animate each text line using the SplitText library)
+            this.DOM.multiLineWrap = [...this.DOM.el.querySelectorAll('.preview__column > p')] as HTMLElement[];
+            this.DOM.multiLineWrap.forEach(line => {
+                this.multiLines.push(new TextLinesReveal(line));
+            });
+        }
     }
 }
 
