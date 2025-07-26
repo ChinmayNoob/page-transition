@@ -1,0 +1,36 @@
+/* Alternative Google Fonts Setup */
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&family=Oswald:wght@200;300;400&display=swap');
+
+/* Alternative font families */
+:root {
+    --font-heading: 'Oswald', sans-serif;
+    /* Alternative to kudryashev-d-excontrast-sans */
+    --font-body: 'Inter', sans-serif;
+    /* Alternative to acumin-pro */
+}
+
+/* Replace the font-family declarations */
+body {
+    font-family: var(--font-body);
+}
+
+.item__title,
+.preview__title {
+    font-family: var(--font-heading);
+}
+
+/* OR update the CSS variables directly */
+/*
+.item__title {
+  font-family: 'Oswald', sans-serif;
+}
+
+.preview__title {
+  font-family: 'Oswald', sans-serif;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+*/

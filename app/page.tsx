@@ -1,103 +1,292 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+import { Item } from '@/components/Item';
+import { Preview } from '@/components/Preview';
+import ItemComponent from '@/components/Item';
+import PreviewComponent from '@/components/Preview';
+import { preloadImages } from '@/lib/utils';
+
+// Sample data - you can replace this with your own data
+const itemsData = [
+  {
+    meta: "2020",
+    title: "Alex Moulder",
+    image: "/1.jpg",
+    desc: "I am only waiting for love to give myself up at last into his hands. That is why it is so late and why I have been guilty of such omissions."
+  },
+  {
+    meta: "2021",
+    title: "Aria Bennett",
+    image: "/2.jpg",
+    desc: "They come with their laws and their codes to bind me fast; but I evade them ever, for I am only waiting for love to give myself up at last into his hands."
+  },
+  {
+    meta: "2022",
+    title: "Jimmy Hughes",
+    image: "/3.jpg",
+    desc: "Clouds heap upon clouds and it darkens. Ah, love, why dost thou let me wait outside at the door all alone?"
+  }
+];
+
+const previewsData = [
+  {
+    title: "Moulder",
+    subtitle: "Alex Moulder",
+    name: "Alex Moulder",
+    year: "2020",
+    image: "/1_big.jpg",
+    location: "And if it rains, a closed car at four. And we shall play a game of chess, pressing lidless eyes and waiting for a knock upon the door.",
+    material: "At the violet hour, when the eyes and back, turn upward from the desk, when the human engine waits."
+  },
+  {
+    title: "Bennett",
+    subtitle: "Aria Bennett",
+    name: "Aria Bennett",
+    year: "2021",
+    image: "/2_big.jpg",
+    location: "And if it rains, a closed car at four. And we shall play a game of chess, pressing lidless eyes and waiting for a knock upon the door.",
+    material: "At the violet hour, when the eyes and back, turn upward from the desk, when the human engine waits."
+  },
+  {
+    title: "Hughes",
+    subtitle: "Jimmy Hughes",
+    name: "Jimmy Hughes",
+    year: "2022",
+    image: "/3_big.jpg",
+    location: "And if it rains, a closed car at four. And we shall play a game of chess, pressing lidless eyes and waiting for a knock upon the door.",
+    material: "At the violet hour, when the eyes and back, turn upward from the desk, when the human engine waits."
+  }
+];
+
+export default function Page() {
+  const [currentPreview, setCurrentPreview] = useState<number | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const overlayRowsRef = useRef<HTMLDivElement[]>([]);
+  const itemsRef = useRef<Item[]>([]);
+  const previewsRef = useRef<Preview[]>([]);
+
+  useEffect(() => {
+    // Preload images
+    preloadImages().then(() => {
+      console.log('Images loaded');
+    });
+
+    // Initialize items and previews
+    const itemElements = document.querySelectorAll('.item');
+    const previewElements = document.querySelectorAll('.preview');
+
+    // Clear arrays
+    itemsRef.current = [];
+    previewsRef.current = [];
+
+    // Create Preview instances
+    previewElements.forEach(preview => {
+      previewsRef.current.push(new Preview(preview as HTMLElement));
+    });
+
+    // Create Item instances
+    itemElements.forEach((item, pos) => {
+      itemsRef.current.push(new Item(item as HTMLElement, previewsRef.current[pos] || null));
+    });
+
+  }, []);
+
+  const openItem = (itemIndex: number) => {
+    const item = itemsRef.current[itemIndex];
+    if (!item || !item.preview) return;
+
+    const contentEl = contentRef.current;
+    const frameEl = frameRef.current;
+    const overlayRows = overlayRowsRef.current;
+
+    gsap.timeline({
+      defaults: {
+        duration: 1,
+        ease: 'power3.inOut'
+      }
+    })
+      .add(() => {
+        // pointer events none to the content
+        if (contentEl) {
+          contentEl.classList.add('content--hidden');
+        }
+      }, 'start')
+
+      .addLabel('start', 0)
+      .set([item.preview.DOM.innerElements, item.preview.DOM.backCtrl], {
+        opacity: 0
+      }, 'start')
+      .to(overlayRows, {
+        scaleY: 1
+      }, 'start')
+
+      .addLabel('content', 'start+=0.6')
+
+      .add(() => {
+        document.body.classList.add('preview-visible');
+
+        if (frameEl) {
+          gsap.set(frameEl, {
+            opacity: 0
+          });
+        }
+
+        if (item.preview?.DOM.el) {
+          item.preview.DOM.el.classList.add('preview--current');
+        }
+      }, 'content')
+      // Image animation (reveal animation)
+      .to([item.preview.DOM.image, item.preview.DOM.imageInner], {
+        startAt: { y: (pos: number) => pos ? '101%' : '-101%' },
+        y: '0%'
+      }, 'content')
+
+      .add(() => {
+        if (item.preview) {
+          for (const line of item.preview.multiLines) {
+            line.in();
+          }
+          gsap.set(item.preview.DOM.multiLineWrap, {
+            opacity: 1,
+            delay: 0.1
+          });
+        }
+      }, 'content')
+      // animate frame element
+      .to(frameEl, {
+        ease: 'expo',
+        startAt: { y: '-100%', opacity: 0 },
+        opacity: 1,
+        y: '0%'
+      }, 'content+=0.3')
+      .to(item.preview.DOM.innerElements, {
+        ease: 'expo',
+        startAt: { yPercent: 101 },
+        yPercent: 0,
+        opacity: 1
+      }, 'content+=0.3')
+      .to(item.preview.DOM.backCtrl, {
+        opacity: 1
+      }, 'content');
+
+    setCurrentPreview(itemIndex);
+  };
+
+  const closeItem = () => {
+    if (currentPreview === null) return;
+
+    const item = itemsRef.current[currentPreview];
+    if (!item || !item.preview) return;
+
+    const contentEl = contentRef.current;
+    const frameEl = frameRef.current;
+    const overlayRows = overlayRowsRef.current;
+
+    gsap.timeline({
+      defaults: {
+        duration: 1,
+        ease: 'power3.inOut'
+      }
+    })
+      .addLabel('start', 0)
+      .to(item.preview.DOM.innerElements, {
+        yPercent: -101,
+        opacity: 0,
+      }, 'start')
+      .add(() => {
+        if (item.preview) {
+          for (const line of item.preview.multiLines) {
+            line.out();
+          }
+        }
+      }, 'start')
+
+      .to(item.preview.DOM.backCtrl, {
+        opacity: 0
+      }, 'start')
+
+      .to(item.preview.DOM.image, {
+        y: '101%'
+      }, 'start')
+      .to(item.preview.DOM.imageInner, {
+        y: '-101%'
+      }, 'start')
+
+      // animate frame element
+      .to(frameEl, {
+        opacity: 0,
+        y: '-100%',
+        onComplete: () => {
+          document.body.classList.remove('preview-visible');
+          if (frameEl) {
+            gsap.set(frameEl, {
+              opacity: 1,
+              y: '0%'
+            });
+          }
+        }
+      }, 'start')
+
+      .addLabel('grid', 'start+=0.6')
+
+      .to(overlayRows, {
+        scaleY: 0,
+        onComplete: () => {
+          if (item.preview?.DOM.el) {
+            item.preview.DOM.el.classList.remove('preview--current');
+          }
+          if (contentEl) {
+            contentEl.classList.remove('content--hidden');
+          }
+        }
+      }, 'grid');
+
+    setCurrentPreview(null);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main>
+      <div ref={frameRef} className="frame">
+        <div className="frame__title">
+          <h1 className="frame__title-main">Cover Page Transition</h1>
+          <br />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </div>
+
+      <div ref={contentRef} className="content">
+        {itemsData.map((item, index) => (
+          <ItemComponent
+            key={index}
+            data={item}
+            preview={null}
+            onItemClick={() => openItem(index)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        ))}
+      </div>
+
+      <div className="overlay">
+        <div
+          ref={el => { if (el) overlayRowsRef.current[0] = el; }}
+          className="overlay__row"
+        />
+        <div
+          ref={el => { if (el) overlayRowsRef.current[1] = el; }}
+          className="overlay__row"
+        />
+      </div>
+
+      <section className="previews">
+        {previewsData.map((preview, index) => (
+          <PreviewComponent
+            key={index}
+            data={preview}
+            onBackClick={closeItem}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        ))}
+      </section>
+    </main>
   );
 }
